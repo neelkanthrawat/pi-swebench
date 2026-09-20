@@ -1,0 +1,15 @@
+FROM ghcr.io/epoch-research/swe-bench.eval.x86_64.django__django-14373:latest
+
+# Install Node.js 24
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Pi
+RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+
+# Add Pi configuration
+RUN mkdir -p /root/.pi/agent
+COPY models.json /root/.pi/agent/models.json
+
+WORKDIR /testbed
