@@ -33,6 +33,8 @@ def collect_statistics(session_file):
     entry_type_counts = Counter()
     role_counts = Counter()
     tool_counts = Counter()
+    tool_call_names = {}
+    tool_call_positions = {}
     compaction_tokens = 0
     branch_summary_tokens = 0
     compaction_cost = 0
@@ -61,7 +63,7 @@ def collect_statistics(session_file):
 
     timestamps = []
 
-    for entry in entries:
+    for json_element_number, entry in enumerate(entries, start=1):
         entry_type = entry.get("type")
         entry_type_counts[entry_type] += 1
 
@@ -135,6 +137,7 @@ def collect_statistics(session_file):
             content = message.get("content", [])
 
             if isinstance(content, list):
+                tool_call_order = 0
                 for block in content:
                     if not isinstance(block, dict):
                         continue
@@ -148,11 +151,18 @@ def collect_statistics(session_file):
                         continue
 
                     tool_counts[tool_name] += 1
-
+                    tool_call_order += 1
+                    # Position is (JSONL element number, call index in that element).
+                    tool_call_positions.setdefault(tool_name, []).append(
+                        (json_element_number, tool_call_order)
+                    )
                     arguments = block.get("arguments", {})
-
                     if not isinstance(arguments, dict):
-                        continue
+                        arguments = {}
+
+                    tool_call_id = block.get("id")
+                    if tool_call_id:
+                        tool_call_names[tool_call_id] = tool_name
 
                     # Files explicitly accessed through Pi's tools
                     if tool_name == "read":
@@ -173,9 +183,24 @@ def collect_statistics(session_file):
 
         if role == "toolResult":
             if message.get("isError"):
+                tool_name = tool_call_names.get(message.get("toolCallId"))
+                content = message.get("content", [])
+                if isinstance(content, list):
+                    error_message = "\n".join(
+                        block["text"]
+                        for block in content
+                        if isinstance(block, dict) and isinstance(block.get("text"), str)
+                    )
+                elif isinstance(content, str):
+                    error_message = content
+                else:
+                    error_message = ""
                 tool_errors.append(
                     {
-                        "tool": message.get("toolName"),
+                        "timestamp": entry.get("timestamp"),
+                        "tool": message.get("toolName") or tool_name,
+                        "error_type": "Error while running tool",
+                        "message": error_message,
                     }
                 )
 
@@ -257,6 +282,7 @@ def collect_statistics(session_file):
             "total_calls": sum(tool_counts.values()),
             "distinct_tools": len(tool_counts),
             "frequency": dict(tool_counts),
+            "tool_call_position": tool_call_positions,
             "errors": len(tool_errors),
             "error_details": tool_errors,
         },
@@ -334,7 +360,8 @@ def process_task_folder(task_folder):
 
         statistics = collect_statistics(session_file)
 
-        output_file = run_folder / "statistics.json"
+        run_number = run_folder.name[len("run_"):]
+        output_file = run_folder / f"statistics_{run_number}.json"
 
         with output_file.open("w", encoding="utf-8") as f:
             json.dump(
