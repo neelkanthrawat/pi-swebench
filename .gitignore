@@ -1,7 +1,11 @@
 experiments
 experiments_2
+experiments_gwdg_*
+experiments_openai_error*
+experiments_openai_*
 sessions
 models.json
+settings.json
 .vscode
 graphs
 __pycache__
