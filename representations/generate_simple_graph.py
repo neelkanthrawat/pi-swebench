@@ -6,9 +6,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 
-# ---------------------------------------------------------
 # Visual style for each action type
-# ---------------------------------------------------------
 
 ACTION_STYLE = {
     "read": {
@@ -33,9 +31,9 @@ ACTION_STYLE = {
 def generate_figure(trajectory_file):
     trajectory_file = Path(trajectory_file)
 
-    # -----------------------------------------------------
+    
     # Load trajectory JSONL
-    # -----------------------------------------------------
+    
 
     trajectory = []
 
@@ -48,9 +46,9 @@ def generate_figure(trajectory_file):
 
             trajectory.append(json.loads(line))
 
-    # -----------------------------------------------------
+    
     # Create graph
-    # -----------------------------------------------------
+    
 
     graph = nx.DiGraph()
 
@@ -63,9 +61,9 @@ def generate_figure(trajectory_file):
             action=action,
         )
 
-    # -----------------------------------------------------
+    
     # Connect consecutive actions
-    # -----------------------------------------------------
+    
 
     for i in range(len(trajectory) - 1):
         current_step = trajectory[i]["step"]
@@ -76,20 +74,20 @@ def generate_figure(trajectory_file):
             next_step,
         )
 
-    # -----------------------------------------------------
+    
     # Chronological layout
     #
     # step 0 -> step 1 -> step 2 -> ...
-    # -----------------------------------------------------
+    
 
     pos = {
         node: (node, 0)
         for node in graph.nodes
     }
 
-    # -----------------------------------------------------
+    
     # Draw
-    # -----------------------------------------------------
+    
 
     plt.figure(
         figsize=(max(12, len(trajectory) * 1.5), 5)
@@ -103,9 +101,9 @@ def generate_figure(trajectory_file):
         arrowsize=20,
     )
 
-    # -----------------------------------------------------
+    
     # Draw nodes grouped by action type
-    # -----------------------------------------------------
+    
 
     for action, style in ACTION_STYLE.items():
 
@@ -127,9 +125,9 @@ def generate_figure(trajectory_file):
             node_size=2500,
         )
 
-    # -----------------------------------------------------
+    
     # Handle unknown action types
-    # -----------------------------------------------------
+    
 
     known_actions = set(ACTION_STYLE)
 
@@ -149,14 +147,14 @@ def generate_figure(trajectory_file):
             node_size=2500,
         )
 
-    # -----------------------------------------------------
+    
     # Labels
     #
     # Only show the tool/action name.
-    # -----------------------------------------------------
+    
 
     labels = {
-        node: graph.nodes[node]["action"]
+        node: f"{node}\n{graph.nodes[node]['action']}"
         for node in graph.nodes
     }
 
@@ -170,9 +168,9 @@ def generate_figure(trajectory_file):
     plt.axis("off")
     plt.tight_layout()
 
-    # -----------------------------------------------------
+    
     # Save
-    # -----------------------------------------------------
+    
 
     output_dir = (
         Path.cwd()
@@ -201,9 +199,7 @@ def generate_figure(trajectory_file):
     print(f"Graph saved to: {output_file}")
 
 
-# ---------------------------------------------------------
 # Command-line interface
-# ---------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser()

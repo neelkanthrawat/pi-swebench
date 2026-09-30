@@ -25,9 +25,9 @@ def extract_trajectory(session_file):
             message = entry.get("message", {})
             role = message.get("role")
 
-            # -------------------------------------------------
+            
             # Assistant tool calls
-            # -------------------------------------------------
+            
 
             if role == "assistant":
                 content = message.get("content", [])
@@ -66,9 +66,9 @@ def extract_trajectory(session_file):
                     trajectory.append(action)
                     step += 1
 
-            # -------------------------------------------------
+            
             # Tool results
-            # -------------------------------------------------
+            
 
             elif role == "toolResult":
                 if not trajectory:
@@ -79,9 +79,9 @@ def extract_trajectory(session_file):
                     False,
                 )
 
-            # -------------------------------------------------
+            
             # Bash executions
-            # -------------------------------------------------
+            
 
             elif role == "bashExecution":
                 action = {
