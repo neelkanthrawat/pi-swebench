@@ -11,5 +11,6 @@ RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 # Add Pi configuration
 RUN mkdir -p /root/.pi/agent
 COPY models.json /root/.pi/agent/models.json
+COPY settings.json /root/.pi/agent/settings.json
 
 WORKDIR /testbed
